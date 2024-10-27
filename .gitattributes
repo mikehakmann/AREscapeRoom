@@ -1,0 +1,9 @@
+# Handle line endings automatically for text files
+* text=auto
+
+# Set specific line endings for Unity projects
+*.cs     text diff=csharp
+*.shader text
+*.asset  text
+*.unity  text
+*.meta   text
