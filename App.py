@@ -3,25 +3,22 @@ from flask import Flask, request, jsonify
 app = Flask(__name__)
 
 # A variable to store the latest data received via POST
-stored_data = {}
+stored_data = {"value": 0}  # Initialize with a default value
 
 @app.route('/', methods=['GET'])
 def get_data():
-    # Return the stored data if any has been received, or a default message
-    if stored_data:
-        return jsonify({"message": "Fetched data", "data": stored_data})
-    else:
-        return jsonify({"message": "No data has been received yet."})
+    """Handle GET requests to fetch stored data."""
+    return jsonify({"message": "Fetched data", "data": stored_data}), 200
 
 @app.route('/', methods=['POST'])
 def post_data():
+    """Handle POST requests to receive and store data."""
     global stored_data
-    # Get the JSON data from the request
     data = request.get_json()
-    # Store it in the `stored_data` variable
-    stored_data = data
-    # Respond with a confirmation message
-    return jsonify({"status": "Data received", "data": stored_data})
+    if not data or "value" not in data:
+        return jsonify({"error": "Invalid data"}), 400
+    stored_data = data  # Update stored data
+    return jsonify({"status": "Data received", "data": stored_data}), 201
 
 if __name__ == "__main__":
-    app.run(port=5000)
+    app.run(host="0.0.0.0", port=12345)  # Make the server accessible on the network
