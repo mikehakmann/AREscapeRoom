@@ -49,7 +49,7 @@ public class NetworkManager : MonoBehaviour
                     // Access the data
                     if (lastResponse != null && lastResponse.data != null)
                     {
-                        Debug.Log($"Fetched values from server: Potentiometer={lastResponse.data.potentiometer}, Switch={lastResponse.data.switchValue}");
+                        Debug.Log($"Fetched values from server: Potentiometer={lastResponse.data.potentiometer}, Switches={string.Join(", ", lastResponse.data.switches)}");
                     }
                     else
                     {
@@ -66,15 +66,15 @@ public class NetworkManager : MonoBehaviour
                 Debug.LogError($"GET Error: {request.error}");
             }
 
-            yield return null;
+            yield return new WaitForSeconds(1f); // Wait for 1 second before the next request
         }
     }
 
     // Coroutine to handle POST requests (optional, left for context)
-    public IEnumerator PostData(int switchValue, int potentiometerValue)
+    public IEnumerator PostData(int[] switches, float potentiometerValue)
     {
         // Create a JSON payload
-        string jsonPayload = JsonUtility.ToJson(new JsonData { potentiometer = potentiometerValue, switchValue = switchValue });
+        string jsonPayload = JsonUtility.ToJson(new JsonData { potentiometer = potentiometerValue, switches = switches });
 
         // Configure the request
         UnityWebRequest request = new UnityWebRequest(url, "POST");
@@ -99,8 +99,8 @@ public class NetworkManager : MonoBehaviour
     [Serializable]
     public class JsonData
     {
-        public int potentiometer; // Matches "potentiometer" in the JSON
-        public int switchValue;   // Matches "switch" in the JSON
+        public float potentiometer; // Matches "potentiometer" in the JSON
+        public int[] switches;      // Matches "switches" array in the JSON
     }
 
     [Serializable]
