@@ -11,7 +11,7 @@ public class ModuleScript : MonoBehaviour
     // Start is called before the first frame update
     private void Start()
     {
-        networkManager = NetworkManager.instance;
+        networkManager = NetworkManager.singleton;
 
         if (networkManager == null)
         {
@@ -22,29 +22,11 @@ public class ModuleScript : MonoBehaviour
         StartCoroutine(CheckDataEveryHalfSecond());
     }
 
-    // Update is called once per frame
-    private void Update()
-    {
-    }
-
-    private void OnDataFetched(string data)
-    {
-        Debug.Log(data);
-        if (networkManager.ExtractValueFromJson(data) == 1)
-        {
-            text.text = "ookaaay se det her " +data;
-        }
-        else
-        {
-            text.text = "arrrgh det for dårligt du " + data;
-        }
-    }
-
     private IEnumerator CheckDataEveryHalfSecond()
     {
         while (true)
         {
-            networkManager.FetchData(OnDataFetched);
+            StartCoroutine(networkManager.GetData());
             yield return new WaitForSeconds(0.5f);
         }
     }

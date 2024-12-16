@@ -5,73 +5,108 @@ using UnityEngine.Networking;
 
 public class NetworkManager : MonoBehaviour
 {
-    public static NetworkManager instance;
-
-    private string url = "http://172.20.10.2:12345/"; // Replace with your server's IP
+    public JsonResponse lastResponse = new JsonResponse();
+    public static NetworkManager singleton;
+    private string url = "http://192.168.220.41:12345"; // Replace with your Flask server's IP
 
     private void Awake()
     {
-        if (instance == null)
+        if (singleton != null && singleton != this)
         {
-            instance = this;
+            Destroy(this); // Ensure only one instance exists
         }
         else
         {
-            Destroy(gameObject); // Ensure only one instance exists
+            singleton = this;
         }
     }
 
-
-    // Method to fetch data from the Flask server
-    public void FetchData(Action<string> onComplete)
+    void Start()
     {
-        StartCoroutine(GetRequest(onComplete));
+        StartCoroutine(GetData());
     }
 
-    private IEnumerator GetRequest(Action<string> onComplete)
+    public IEnumerator GetData()
     {
-        using (UnityWebRequest webRequest = UnityWebRequest.Get(url))
+        while (true)
         {
-            yield return webRequest.SendWebRequest();
+            UnityWebRequest request = UnityWebRequest.Get(url);
 
-            if (webRequest.result == UnityWebRequest.Result.ConnectionError || webRequest.result == UnityWebRequest.Result.ProtocolError)
+            // Send the request and wait for the response
+            yield return request.SendWebRequest();
+
+            if (request.result == UnityWebRequest.Result.Success)
             {
-                Debug.LogError("Error: " + webRequest.error);
-                onComplete?.Invoke(null); // Pass null in case of an error
+                // Parse the JSON response
+                string jsonResponse = request.downloadHandler.text;
+
+                try
+                {
+                    // Deserialize the JSON response into an object
+                    lastResponse = JsonUtility.FromJson<JsonResponse>(jsonResponse);
+                    Debug.Log($"JSON Response: {jsonResponse}");
+
+                    // Access the data
+                    if (lastResponse != null && lastResponse.data != null)
+                    {
+                        Debug.Log($"Fetched values from server: Potentiometer={lastResponse.data.potentiometer}, Switch={lastResponse.data.switchValue}");
+                    }
+                    else
+                    {
+                        Debug.LogError("Error: Data not found in response.");
+                    }
+                }
+                catch (Exception e)
+                {
+                    Debug.LogError($"Error parsing JSON: {e.Message}");
+                }
             }
             else
             {
-                // Log the server's response
-                string response = webRequest.downloadHandler.text;
-                onComplete?.Invoke(response); // Pass the response back
+                Debug.LogError($"GET Error: {request.error}");
             }
+
+            yield return null;
         }
     }
-    // Method to extract value from JSON string
-    public int ExtractValueFromJson(string json)
-    {
-        if (string.IsNullOrEmpty(json))
-        {
-            Debug.LogError("JSON data is null or empty.");
-            return -1; // Return an error code or default value
-        }
 
-        try
+    // Coroutine to handle POST requests (optional, left for context)
+    public IEnumerator PostData(int switchValue, int potentiometerValue)
+    {
+        // Create a JSON payload
+        string jsonPayload = JsonUtility.ToJson(new JsonData { potentiometer = potentiometerValue, switchValue = switchValue });
+
+        // Configure the request
+        UnityWebRequest request = new UnityWebRequest(url, "POST");
+        byte[] bodyRaw = System.Text.Encoding.UTF8.GetBytes(jsonPayload);
+        request.uploadHandler = new UploadHandlerRaw(bodyRaw);
+        request.downloadHandler = new DownloadHandlerBuffer();
+        request.SetRequestHeader("Content-Type", "application/json");
+
+        // Send the request and wait for the response
+        yield return request.SendWebRequest();
+
+        if (request.result == UnityWebRequest.Result.Success)
         {
-            // Parse the JSON string and extract the "value" field
-            var jsonData = JsonUtility.FromJson<JsonData>(json);
-            return jsonData.value;
+            Debug.Log($"POST Response: {request.downloadHandler.text}");
         }
-        catch (Exception ex)
+        else
         {
-            Debug.LogError("Failed to parse JSON: " + ex.Message);
-            return -1; // Return an error code or default value
+            Debug.LogError($"POST Error: {request.error}");
         }
     }
 
     [Serializable]
-    private class JsonData
+    public class JsonData
     {
-        public int value; // Match the "value" key in the JSON
+        public int potentiometer; // Matches "potentiometer" in the JSON
+        public int switchValue;   // Matches "switch" in the JSON
+    }
+
+    [Serializable]
+    public class JsonResponse
+    {
+        public string message;   // Matches "message" in the JSON
+        public JsonData data;    // Matches "data" in the JSON
     }
 }

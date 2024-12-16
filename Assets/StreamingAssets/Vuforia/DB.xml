@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<QCARConfig>
+  <Tracking>
+    <ImageTarget name="ar_marker1" size="1.000000 1.000000" />
+    <ImageTarget name="ar_marker" size="1.000000 1.000000" />
+    <ImageTarget name="blue_square_orange_background_high_contrast_shadow" size="1.000000 1.000000" />
+    <ImageTarget name="image17072948040" size="0.200000 0.200000" />
+    <ImageTarget name="image17072936290" size="0.200000 0.200000" />
+  </Tracking>
+</QCARConfig>
