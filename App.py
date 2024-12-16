@@ -4,7 +4,7 @@ from waitress import serve
 app = Flask(__name__)
 
 # A variable to store the latest data received via POST
-stored_data = {"switch": 0, "potentiometer": 0}  # Initialize with a default value
+stored_data = {"switches": [], "potentiometer": 0.0}  # Initialize with default values
 
 @app.route('/', methods=['GET'])
 def get_data():
@@ -19,9 +19,24 @@ def post_data():
     try:
         data = request.get_json()
         print(data)
-        if not data or "switch" not in data or "potentiometer" not in data:
+        # Validate the incoming data
+        if not data or "switches" not in data or "potentiometer" not in data:
             return jsonify({"error": "Invalid data"}), 400
-        stored_data = data
+        
+        # Ensure 'switches' is a list of integers
+        if not isinstance(data["switches"], list) or not all(isinstance(s, int) for s in data["switches"]):
+            return jsonify({"error": "'switches' must be a list of integers"}), 400
+        
+        # Ensure 'potentiometer' is a float or integer
+        if not isinstance(data["potentiometer"], (float, int)):
+            return jsonify({"error": "'potentiometer' must be a number"}), 400
+
+        # Update the stored data
+        stored_data = {
+            "switches": data["switches"],
+            "potentiometer": float(data["potentiometer"])  # Convert potentiometer to float
+        }
+
         response = jsonify({"status": "Data received", "data": stored_data})
         return response, 201
     except Exception as e:
