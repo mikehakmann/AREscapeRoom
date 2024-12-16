@@ -9,7 +9,7 @@ public class Potentiometer : MonoBehaviour
         0.2f, 0.8f, 0.5f
     };
     public float allowedErrorMargin = 0.05f;
-    private float currPotentiometerValue = 0;
+    [SerializeField] private float currPotentiometerValue = 0;
     private float lastPotentiometerValue = 0;
     private Canvas canvas;
     private Image backdrop;
@@ -17,7 +17,10 @@ public class Potentiometer : MonoBehaviour
     private Image targetValue;
     private float maxAngle = 360;
     private int currValueIndex = 0;
-    private float unlockDuration = 0.3f;
+    private float unlockDuration = 0.7f;
+    private Transform mainLock; 
+    private Transform lockCore;
+    private GameObject fireworks;
 
     void Awake()
     {
@@ -31,17 +34,21 @@ public class Potentiometer : MonoBehaviour
         backdrop = GameObject.Find("Backdrop").GetComponent<Image>();
         currentValue = GameObject.Find("CurrentValue").GetComponent<Image>();
         targetValue = GameObject.Find("TargetValue").GetComponent<Image>();
+        mainLock = GameObject.Find("Lock").GetComponent<Transform>();
+        lockCore = GameObject.Find("LockCore").GetComponent<Transform>();
+        fireworks = GameObject.Find("Fireworks");
+        fireworks.SetActive(false);
     }
 
     void Update()
     {
-        currPotentiometerValue = (float)NetworkManager.singleton.lastResponse.data.potentiometer / 4095;
+        //currPotentiometerValue = (float)NetworkManager.singleton.lastResponse.data.potentiometer / 4095;
 
         if (currValueIndex < correctValues.Length)
         {
             ShowPotentiometer();
 
-            currentValue.transform.localRotation = Quaternion.Euler(0f, 0f, currPotentiometerValue * maxAngle);
+            lockCore.transform.localRotation = Quaternion.Euler(0f, 0f, currPotentiometerValue * maxAngle);
 
             targetValue.enabled = true;
             targetValue.fillAmount = allowedErrorMargin * 2;
@@ -73,7 +80,9 @@ public class Potentiometer : MonoBehaviour
             }
         }
 
-        // TODO - Success indicator
+        fireworks.SetActive(true);
+        Destroy(fireworks,10f);
+
     }
 
     public void ShowPotentiometer()
